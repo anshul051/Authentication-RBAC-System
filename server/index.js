@@ -5,6 +5,14 @@ app.get("/", (req, res) => {
   res.send("Server running");
 });
 
-app.listen(3000, () => {
-  console.log("Server started on port 3000");
+app.get("/health", (req,res) => {
+  res.status(200).json({
+    status: "OK",
+    uptime: process.uptime(),
+    message: "Backend running very good",
+  });
+});
+
+app.listen(5000, () => {
+  console.log("Server started on port 5000");
 });
