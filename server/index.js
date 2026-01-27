@@ -9,7 +9,7 @@ app.get("/health", (req,res) => {
   res.status(200).json({
     status: "OK",
     uptime: process.uptime(),
-    message: "Backend running very good",
+    message: "Backend running successfully",
   });
 });
 
