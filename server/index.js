@@ -2,6 +2,7 @@ import express from "express";
 import dotenv from "dotenv";
 import { healthCheck } from "./src/controller/health.controller.js";
 import connectDB from "./src/db/connect.js";
+import healthRoutes from "./src/routes/health.route.js";
 
 dotenv.config();
 
@@ -12,7 +13,8 @@ const PORT = process.env.PORT || 5000;
 app.use(express.json());
 
 //Routes
-app.use("/api/health", healthCheck);
+//app.use("/api/health", healthCheck);
+app.use("/api/health", healthRoutes);
 
 //Test route
 app.get("/", (req, res) => {
@@ -24,15 +26,17 @@ app.get("/", (req, res) => {
 // Start server only after DB connection is established
 const startServer = async () => {
   try {
-    await connectDB();  // Connect to DB first
-    
+    await connectDB(); // Connect to DB first
+
     app.listen(PORT, () => {
       console.log(`Server is running on port ${PORT}`);
-      console.log(`Health check available at http://localhost:${PORT}/api/health`);
-    })
+      console.log(
+        `Health check available at http://localhost:${PORT}/api/health`,
+      );
+    });
   } catch (error) {
     console.error("Failed to start server:", error);
-    process.exit(1);  // Exit process if server fails to start
+    process.exit(1); // Exit process if server fails to start
   }
 };
 
