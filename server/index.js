@@ -1,18 +1,21 @@
-const express = require("express");
+import express from 'express';
+import dotenv from 'dotenv';
+
+dotenv.config();
+
 const app = express();
+const PORT = process.env.PORT || 5000;
 
-app.get("/", (req, res) => {
-  res.send("Server running");
-});
+//Middleware
+app.use(express.json());
 
-app.get("/health", (req,res) => {
-  res.status(200).json({
-    status: "OK",
-    uptime: process.uptime(),
-    message: "Backend running successfully",
+//Test route
+app.get('/', (req,res) => {
+  res.json({
+    message: 'Server is running',
   });
 });
 
-app.listen(5000, () => {
-  console.log("Server started on port 5000");
+app.listen(PORT, () => {
+  console.log(`Server is running on ${PORT}`);
 });
