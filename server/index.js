@@ -1,6 +1,7 @@
 import express from "express";
 import dotenv from "dotenv";
 import { healthCheck } from "./src/controller/health.controller.js";
+import authRoutes from "./src/routes/auth.routes.js";
 import connectDB from "./src/db/connect.js";
 import healthRoutes from "./src/routes/health.route.js";
 
@@ -15,6 +16,7 @@ app.use(express.json());
 //Routes
 //app.use("/api/health", healthCheck);
 app.use("/api/health", healthRoutes);
+app.use('/api/auth', authRoutes);
 
 //Test route
 app.get("/", (req, res) => {
@@ -33,6 +35,7 @@ const startServer = async () => {
       console.log(
         `Health check available at http://localhost:${PORT}/api/health`,
       );
+      console.log(`Auth endpoints available at http://localhost:${PORT}/api/auth`);
     });
   } catch (error) {
     console.error("Failed to start server:", error);
