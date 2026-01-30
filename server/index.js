@@ -1,45 +1,34 @@
-import express from "express";
-import dotenv from "dotenv";
-import { healthCheck } from "./src/controller/health.controller.js";
-import authRoutes from "./src/routes/auth.routes.js";
-import connectDB from "./src/db/connect.js";
-import healthRoutes from "./src/routes/health.route.js";
+import express from 'express';
+import dotenv from 'dotenv';
+import cookieParser from 'cookie-parser';
+import healthRoute from './src/routes/health.route.js';
+import authRoutes from './src/routes/auth.routes.js';
+import connectDB from './src/db/connect.js';
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-//Middleware
+// Middleware
 app.use(express.json());
+app.use(cookieParser());
 
-//Routes
-//app.use("/api/health", healthCheck);
-app.use("/api/health", healthRoutes);
-app.use('/api/auth', authRoutes);
+// Routes
+app.use('/api/health', healthRoute);
+app.use('/api/auth', authRoutes);  // ← This line is critical!
 
-//Test route
-app.get("/", (req, res) => {
-  res.json({
-    message: "Server is running",
-  });
-});
-
-// Start server only after DB connection is established
 const startServer = async () => {
   try {
-    await connectDB(); // Connect to DB first
-
+    await connectDB();
+    
     app.listen(PORT, () => {
-      console.log(`Server is running on port ${PORT}`);
-      console.log(
-        `Health check available at http://localhost:${PORT}/api/health`,
-      );
-      console.log(`Auth endpoints available at http://localhost:${PORT}/api/auth`);
+      console.log(`🚀 Server running on port ${PORT}`);
+      console.log(`🏥 Health: http://localhost:${PORT}/api/health`);
+      console.log(`🔐 Auth: http://localhost:${PORT}/api/auth`);
     });
   } catch (error) {
-    console.error("Failed to start server:", error);
-    process.exit(1); // Exit process if server fails to start
+    console.error('Failed to start server:', error);
   }
 };
 
