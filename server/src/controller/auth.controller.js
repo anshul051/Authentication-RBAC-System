@@ -4,7 +4,8 @@ import {
   generateAccessToken, 
   generateRefreshToken,
   generateTokenId,
-  verifyRefreshToken
+  verifyRefreshToken,
+  verifyAccessToken
 } from '../utils/jwt.util.js';
 
 /**
@@ -309,3 +310,8 @@ export const refresh = async (req, res) => {
     });
   }
 };
+
+/**
+ * Authentication middleware 
+ * Verifies access token and attaches user info to request
+ */
