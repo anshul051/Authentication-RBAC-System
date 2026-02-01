@@ -315,3 +315,34 @@ export const refresh = async (req, res) => {
  * Authentication middleware 
  * Verifies access token and attaches user info to request
  */
+export const authenticate = async (req, res, next) => {
+  try {
+    // 1. Get token from cookies
+    const { accessToken } = req.cookies;
+    if (!accessToken) {
+      return res.status(401).json({
+        success: false,
+        message: 'Access token not provided',
+      });
+    }
+
+    //2. Verify token
+    const decoded = verifyAccessToken(accessToken);
+
+    //3. Attach user info to request object
+    req.user = {
+      id: decoded.userId,
+      email: decoded.email,
+      role: decoded.role,
+    };
+
+    //4. Continue to next middleware/calculator
+    next();
+  } catch (error) {
+    console.error('Authentication error:', error);
+    return res.status(401).json({
+      success: false,
+      message: 'Invalid or expired access token',
+    });
+  }
+};
