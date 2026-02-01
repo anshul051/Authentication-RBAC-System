@@ -1,23 +1,27 @@
-import User from "../models/User.model.js";
+import User from '../models/User.model.js';
 
-// Get user profile by ID
-export const getUserProfile = async (req, res) => {
+/**
+ * Get current user profile
+ * @route   GET /api/user/profile
+ * @access  Private (requires login)
+ */
+export const getProfile = async (req, res) => {
   try {
-    // req.user is set by authentication middleware
-    const userId = req.user.id;
+    // req.user is set by auth middleware
+    const userId = req.user.userId;
 
-    // Find User (exclude password field)
-    const user = await User.findById(userId).select("-password -refreshTokens");
+    // Find user (exclude password)
+    const user = await User.findById(userId).select('-password -refreshTokens');
 
     if (!user) {
       return res.status(404).json({
-        status: false,
-        message: "User not found",
+        success: false,
+        message: 'User not found',
       });
     }
 
     res.status(200).json({
-      status: true,
+      success: true,
       data: {
         user: {
           id: user._id,
@@ -29,53 +33,57 @@ export const getUserProfile = async (req, res) => {
       },
     });
   } catch (error) {
+    console.error('Get profile error:', error);
     res.status(500).json({
       success: false,
-      message: "Failed to get user profile",
+      message: 'Failed to get profile',
       error: error.message,
     });
   }
 };
 
-//Update user profile
+/**
+ * Update user profile
+ * @route   PUT /api/user/profile
+ * @access  Private
+ */
 export const updateProfile = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user.userId;
     const { email } = req.body;
 
-    //Check if email is already taken by another user
+    // Check if email is already taken by another user
     if (email) {
-      const existingUser = await User.findOne({
-        email,
-        _id: { $ne: userId }, // Exclude current user
+      const existingUser = await User.findOne({ 
+        email, 
+        _id: { $ne: userId } // Not equal to current user
       });
 
       if (existingUser) {
         return res.status(400).json({
-          status: false,
-          message: "Email is already taken by another user",
+          success: false,
+          message: 'Email already in use',
         });
       }
     }
 
-    // Update user fields
-    const updatedUser = await User.findByIdAndUpdate (
-        userId,
-        { email },
-        { new: true, runValidators: true }
-    ).select("-password -refreshTokens");
+    // Update user
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { email },
+      { new: true, runValidators: true }
+    ).select('-password -refreshTokens');
 
     res.status(200).json({
-        status: true,
-        message: "Profile updated successfully",
-        data: { user: updatedUser },
+      success: true,
+      message: 'Profile updated successfully',
+      data: { user },
     });
   } catch (error) {
-    console.error("Update profile error:", error);
-
+    console.error('Update profile error:', error);
     res.status(500).json({
-      status: false,
-      message: "Failed to update profile",
+      success: false,
+      message: 'Failed to update profile',
       error: error.message,
     });
   }
