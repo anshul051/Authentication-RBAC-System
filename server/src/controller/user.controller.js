@@ -88,3 +88,27 @@ export const updateProfile = async (req, res) => {
     });
   }
 };
+
+// Admin-only: Get all users
+export const getAllUsers = async (req, res) => {
+  try {
+    const users = await User.find()
+      .select('-password -refreshTokens')
+      .sort({ createdAt: -1 });  // Newest first
+
+    res.status(200).json({
+      success: true,
+      data: {
+        count: users.length,
+        users,
+      },
+    });
+  } catch (error) {
+    console.error('Get all users error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get users',
+      error: error.message,
+    });
+  }
+};
