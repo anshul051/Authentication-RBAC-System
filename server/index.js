@@ -5,6 +5,7 @@ import healthRoute from './src/routes/health.route.js';
 import authRoutes from './src/routes/auth.routes.js';
 import userRoutes from './src/routes/user.routes.js';
 import connectDB from './src/db/connect.js';
+import auditRoutes from './src/routes/audit.routes.js';
 
 dotenv.config();
 
@@ -19,6 +20,7 @@ app.use(cookieParser());
 app.use('/api/health', healthRoute);
 app.use('/api/auth', authRoutes);  // ← This line is critical!
 app.use('/api/user', userRoutes);
+app.use('/api/audit', auditRoutes);
 
 const startServer = async () => {
   try {
