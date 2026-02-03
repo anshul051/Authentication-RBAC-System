@@ -1,5 +1,6 @@
 import User from '../models/User.model.js';
 import { hashPassword, comparePassword } from '../utils/password.util.js';
+import { createAuditLog, getClientIp, getUserAgent } from '../utils/auditLog.utils.js';
 import { 
   generateAccessToken, 
   generateRefreshToken,
@@ -38,6 +39,17 @@ export const register = async (req, res) => {
       role: role || 'user',
     });
 
+    // ADD AUDIT LOG ENTRY
+    await createAuditLog({
+      userId: user._id,
+      email: user.email,
+      action: 'USER_REGISTERED',
+      details: `New user registered with email: ${user.email} and role: ${user.role}`,
+      ipAddress: getClientIp(req),
+      userAgent: getUserAgent(req),
+      status: 'success',
+    });
+
     res.status(201).json({
       success: true,
       message: 'User registered successfully',
@@ -74,6 +86,16 @@ export const login = async (req, res) => {
     const user = await User.findOne({ email }).select('+password');
     
     if (!user) {
+      // LOG FAILED LOGIN ATTEMPT
+      await createAuditLog({
+        email,
+        action: 'LOGIN_FAILED',
+        details: `Failed Login attempt with email: ${email}`,
+        ipAddress: getClientIp(req),
+        userAgent: getUserAgent(req),
+        status: 'failure',
+      });
+
       return res.status(401).json({
         success: false,
         message: 'Invalid email or password',
@@ -83,6 +105,17 @@ export const login = async (req, res) => {
     const isPasswordValid = await comparePassword(password, user.password);
     
     if (!isPasswordValid) {
+      // LOG FAILED LOGIN ATTEMPT
+      await createAuditLog({
+        userId: user._id,
+        email: user.email,
+        action: 'LOGIN_FAILED',
+        details: `Failed Login attempt with email: ${user.email}`,
+        ipAddress: getClientIp(req),
+        userAgent: getUserAgent(req),
+        status: 'failure',
+      });
+
       return res.status(401).json({
         success: false,
         message: 'Invalid email or password',
@@ -127,6 +160,17 @@ export const login = async (req, res) => {
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
       maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    // LOG SUCCESSFUL LOGIN
+    await createAuditLog({
+      userId: user._id,
+      email: user.email,
+      action: 'USER_LOGIN_SUCCESS',
+      details: `User logged in successfully with email: ${user.email}`,
+      ipAddress: getClientIp(req),
+      userAgent: getUserAgent(req),
+      status: 'success',
     });
 
     res.status(200).json({
@@ -187,6 +231,17 @@ export const logout = async (req, res) => {
         // Clear cookies
         res.clearCookie('accessToken');
         res.clearCookie('refreshToken');
+
+        // LOG LOGOUT ACTION
+        await createAuditLog({
+          userId: user._id,
+          email: user.email,
+          action: 'USER_LOGOUT',
+          details: `User logged out with email: ${user.email}`,
+          ipAddress: getClientIp(req),
+          userAgent: getUserAgent(req),
+          status: 'success',
+        });
 
         res.status(200).json({
             success: true,
@@ -288,6 +343,17 @@ export const refresh = async (req, res) => {
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
       maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    // LOG TOKEN REFRESH ACTION
+    await createAuditLog({
+      userId: user._id,
+      email: user.email,
+      action: 'TOKEN_REFRESH',
+      details: `Tokens refreshed for user with email: ${user.email}`,
+      ipAddress: getClientIp(req),
+      userAgent: getUserAgent(req),
+      status: 'success',
     });
 
     res.status(200).json({
