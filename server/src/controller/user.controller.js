@@ -1,4 +1,5 @@
 import User from '../models/User.model.js';
+import { createAuditLog, getClientIp, getUserAgent } from '../utils/auditLog.util.js';
 
 /**
  * Get current user profile
@@ -19,6 +20,17 @@ export const getProfile = async (req, res) => {
         message: 'User not found',
       });
     }
+
+    // LOG PROFILE ACCESS
+    await createAuditLog({
+      userId: user._id,
+      email: user.email,
+      action: 'PROFILE_VIEW',
+      details: 'User viewed their profile',
+      ipAddress: getClientIp(req),
+      userAgent: getUserAgent(req),
+      status: 'success',
+    });
 
     res.status(200).json({
       success: true,
@@ -74,6 +86,23 @@ export const updateProfile = async (req, res) => {
       { new: true, runValidators: true }
     ).select('-password -refreshTokens');
 
+
+    // LOG PROFILE UPDATE
+    await createAuditLog({
+      userId: user._id,
+      email: user.email,
+      action: 'PROFILE_UPDATED',
+      details: 'User updated their profile',
+      ipAddress: getClientIp(req),
+      userAgent: getUserAgent(req),
+      status: 'success',
+      metadata: {
+        changedFields: email ? ['email'] : [],
+        oldEmail: oldUser.email,
+        newEmail: user.email,
+      },
+    });
+
     res.status(200).json({
       success: true,
       message: 'Profile updated successfully',
@@ -95,6 +124,17 @@ export const getAllUsers = async (req, res) => {
     const users = await User.find()
       .select('-password -refreshTokens')
       .sort({ createdAt: -1 });  // Newest first
+
+      // ← LOG ADMIN ACTION
+    await createAuditLog({
+      userId: req.user.userId,
+      email: req.user.email,
+      action: 'ADMIN_VIEWED_USERS',
+      details: `Admin viewed all users (${users.length} total)`,
+      ipAddress: getClientIp(req),
+      userAgent: getUserAgent(req),
+      status: 'success',
+    });
 
     res.status(200).json({
       success: true,
