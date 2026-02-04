@@ -1,6 +1,6 @@
 import User from '../models/User.model.js';
 import { hashPassword, comparePassword } from '../utils/password.util.js';
-import { createAuditLog, getClientIp, getUserAgent } from '../utils/auditLog.utils.js';
+import { createAuditLog, getClientIp, getUserAgent } from '../utils/auditLog.util.js';
 import { 
   generateAccessToken, 
   generateRefreshToken,
@@ -89,7 +89,7 @@ export const login = async (req, res) => {
       // LOG FAILED LOGIN ATTEMPT
       await createAuditLog({
         email,
-        action: 'LOGIN_FAILED',
+        action: 'USER_LOGIN_FAILED',
         details: `Failed Login attempt with email: ${email}`,
         ipAddress: getClientIp(req),
         userAgent: getUserAgent(req),
@@ -109,7 +109,7 @@ export const login = async (req, res) => {
       await createAuditLog({
         userId: user._id,
         email: user.email,
-        action: 'LOGIN_FAILED',
+        action: 'USER_LOGIN_FAILED',
         details: `Failed Login attempt with email: ${user.email}`,
         ipAddress: getClientIp(req),
         userAgent: getUserAgent(req),

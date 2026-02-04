@@ -2,10 +2,10 @@ import express from 'express';
 import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
 import healthRoute from './src/routes/health.route.js';
-import authRoutes from './src/routes/auth.routes.js';
-import userRoutes from './src/routes/user.routes.js';
+import authRoutes from './src/routes/auth.route.js';
+import userRoutes from './src/routes/user.route.js';
 import connectDB from './src/db/connect.js';
-import auditRoutes from './src/routes/audit.routes.js';
+import auditRoutes from './src/routes/audit.route.js';
 
 dotenv.config();
 
