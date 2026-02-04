@@ -25,7 +25,7 @@ export const getProfile = async (req, res) => {
     await createAuditLog({
       userId: user._id,
       email: user.email,
-      action: 'PROFILE_VIEW',
+      action: 'PROFILE_VIEWED',
       details: 'User viewed their profile',
       ipAddress: getClientIp(req),
       userAgent: getUserAgent(req),
