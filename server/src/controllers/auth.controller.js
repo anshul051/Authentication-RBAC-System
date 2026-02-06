@@ -8,6 +8,11 @@ import {
   verifyRefreshToken,
   verifyAccessToken
 } from '../utils/jwt.util.js';
+import { 
+  incrementLoginAttempts, 
+  resetLoginAttempts,
+  checkAccountLock 
+} from '../utils/accountLockout.util.js';
 
 /**
  * Register a new user
@@ -86,11 +91,10 @@ export const login = async (req, res) => {
     const user = await User.findOne({ email }).select('+password');
     
     if (!user) {
-      // LOG FAILED LOGIN ATTEMPT
       await createAuditLog({
         email,
         action: 'USER_LOGIN_FAILED',
-        details: `Failed Login attempt with email: ${email}`,
+        details: 'User not found',
         ipAddress: getClientIp(req),
         userAgent: getUserAgent(req),
         status: 'failure',
@@ -99,28 +103,80 @@ export const login = async (req, res) => {
       return res.status(401).json({
         success: false,
         message: 'Invalid email or password',
+      });
+    }
+
+    // ← ADD: Check if account is locked
+    const lockStatus = await checkAccountLock(user._id);
+    
+    if (lockStatus.isLocked) {
+      const minutesRemaining = Math.ceil(
+        (new Date(lockStatus.lockUntil) - Date.now()) / 1000 / 60
+      );
+
+      await createAuditLog({
+        userId: user._id,
+        email: user.email,
+        action: 'USER_LOGIN_FAILED',
+        details: `Login attempt on locked account. Locked until ${lockStatus.lockUntil}`,
+        ipAddress: getClientIp(req),
+        userAgent: getUserAgent(req),
+        status: 'failure',
+        metadata: { 
+          reason: 'Account locked',
+          lockUntil: lockStatus.lockUntil,
+        },
+      });
+
+      return res.status(423).json({
+        success: false,
+        message: `Account is locked due to multiple failed login attempts. Try again in ${minutesRemaining} minutes.`,
+        lockUntil: lockStatus.lockUntil,
       });
     }
 
     const isPasswordValid = await comparePassword(password, user.password);
     
     if (!isPasswordValid) {
-      // LOG FAILED LOGIN ATTEMPT
+      // ← ADD: Increment failed attempts
+      await incrementLoginAttempts(user._id);
+
+      // Check if this attempt caused a lock
+      const newLockStatus = await checkAccountLock(user._id);
+      
       await createAuditLog({
         userId: user._id,
         email: user.email,
         action: 'USER_LOGIN_FAILED',
-        details: `Failed Login attempt with email: ${user.email}`,
+        details: newLockStatus.isLocked 
+          ? `Invalid password - account locked after ${user.loginAttempts + 1} attempts`
+          : `Invalid password - ${newLockStatus.attemptsRemaining} attempts remaining`,
         ipAddress: getClientIp(req),
         userAgent: getUserAgent(req),
         status: 'failure',
+        metadata: {
+          loginAttempts: user.loginAttempts + 1,
+          isLocked: newLockStatus.isLocked,
+        },
       });
+
+      if (newLockStatus.isLocked) {
+        return res.status(423).json({
+          success: false,
+          message: 'Too many failed login attempts. Account locked for 30 minutes.',
+          lockUntil: newLockStatus.lockUntil,
+        });
+      }
 
       return res.status(401).json({
         success: false,
-        message: 'Invalid email or password',
+        message: `Invalid email or password. ${newLockStatus.attemptsRemaining} attempts remaining.`,
+        attemptsRemaining: newLockStatus.attemptsRemaining,
       });
     }
+
+    // ← ADD: Reset attempts on successful login
+    await resetLoginAttempts(user._id);
 
     const accessTokenPayload = {
       userId: user._id,
@@ -162,12 +218,11 @@ export const login = async (req, res) => {
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
-    // LOG SUCCESSFUL LOGIN
     await createAuditLog({
       userId: user._id,
       email: user.email,
       action: 'USER_LOGIN_SUCCESS',
-      details: `User logged in successfully with email: ${user.email}`,
+      details: 'User logged in successfully',
       ipAddress: getClientIp(req),
       userAgent: getUserAgent(req),
       status: 'success',

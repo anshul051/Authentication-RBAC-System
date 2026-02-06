@@ -36,6 +36,14 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    loginAttempts: {
+      type: Number,
+      default: 0,
+    },
+    lockUntil: {
+      type: Date,
+      default: null,
+    },
     createdAt: {
       type: Date,
       default: Date.now,
@@ -45,6 +53,12 @@ const userSchema = new mongoose.Schema(
     timestamps: true, // Adds createdAt and updatedAt automatically
   }
 );
+
+// Check if the account is currently locked
+userSchema.virtual('isLocked').get(function() {
+  // Check if lockUntil exists and is in the future
+  return !!(this.lockUntil && this.lockUntil > Date.now());
+});
 
 const User = mongoose.model('User', userSchema);
 
