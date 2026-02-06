@@ -5,7 +5,7 @@ import {
   logout,
   refresh,
 } from "../controllers/auth.controller.js";
-import { registerLimiter, authLimiter } from "../middleware/rateLimit.middleware.js";
+import { registerLimiter, authLimiter } from "../middleware/rateLimiter.middleware.js";
 
 const router = express.Router();
 

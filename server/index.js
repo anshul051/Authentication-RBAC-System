@@ -6,7 +6,7 @@ import authRoutes from './src/routes/auth.route.js';
 import userRoutes from './src/routes/user.route.js';
 import connectDB from './src/db/connect.js';
 import auditRoutes from './src/routes/audit.route.js';
-import { generalLimiter } from './src/middleware/rateLimit.middleware.js';
+import { generalLimiter } from './src/middleware/rateLimiter.middleware.js';
 
 dotenv.config();
 
