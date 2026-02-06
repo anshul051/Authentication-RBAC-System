@@ -1,5 +1,6 @@
 import User from '../models/User.model.js';
 import { createAuditLog, getClientIp, getUserAgent } from '../utils/auditLog.util.js';
+import { unlockAccount } from '../utils/accountLockout.util.js';
 
 /**
  * Get current user profile
@@ -148,6 +149,54 @@ export const getAllUsers = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to get users',
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * Unlock user account (admin only)
+ * @route   POST /api/user/unlock/:userId
+ * @access  Private (admin)
+ */
+export const unlockUserAccount = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    const user = await User.findById(userId);
+    
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found',
+      });
+    }
+
+    await unlockAccount(userId);
+
+    await createAuditLog({
+      userId: req.user.userId,
+      email: req.user.email,
+      action: 'ADMIN_VIEWED_USERS',
+      details: `Admin unlocked account for ${user.email}`,
+      ipAddress: getClientIp(req),
+      userAgent: getUserAgent(req),
+      status: 'success',
+      metadata: {
+        unlockedUserId: userId,
+        unlockedUserEmail: user.email,
+      },
+    });
+
+    res.status(200).json({
+      success: true,
+      message: `Account unlocked for ${user.email}`,
+    });
+  } catch (error) {
+    console.error('Unlock account error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to unlock account',
       error: error.message,
     });
   }

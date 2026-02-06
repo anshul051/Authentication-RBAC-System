@@ -1,8 +1,7 @@
 import express from "express";
-import { getProfile, updateProfile } from "../controllers/user.controller.js";
+import { getProfile, updateProfile, getAllUsers, unlockUserAccount } from "../controllers/user.controller.js";
 import { authenticate } from "../middleware/auth.middleware.js";
 import { authorize } from "../middleware/rbac.middleware.js";
-import { getAllUsers } from "../controllers/user.controller.js";
 
 const router = express.Router();
 
@@ -17,5 +16,6 @@ router.put("/profile", updateProfile);
 
 // Admin-only route
 router.get("/all", authorize("admin"), getAllUsers);
+router.post('/unlock/:userId', authorize('admin'), unlockUserAccount);
 
 export default router;
