@@ -6,6 +6,7 @@ import authRoutes from './src/routes/auth.route.js';
 import userRoutes from './src/routes/user.route.js';
 import connectDB from './src/db/connect.js';
 import auditRoutes from './src/routes/audit.route.js';
+import { generalLimiter } from './src/middleware/rateLimit.middleware.js';
 
 dotenv.config();
 
@@ -15,7 +16,7 @@ const PORT = process.env.PORT || 5000;
 // Middleware
 app.use(express.json());
 app.use(cookieParser());
-
+app.use(generalLimiter); // Apply general rate limiter to all routes
 // Routes
 app.use('/api/health', healthRoute);
 app.use('/api/auth', authRoutes);  // ← This line is critical!
@@ -28,9 +29,7 @@ const startServer = async () => {
     
     app.listen(PORT, () => {
       console.log(`🚀 Server running on port ${PORT}`);
-      console.log(`🏥 Health: http://localhost:${PORT}/api/health`);
-      console.log(`🔐 Auth: http://localhost:${PORT}/api/auth`);
-      console.log(`👤 User: http://localhost:${PORT}/api/user`);
+      console.log(`🛡️ Rate limiting enabled`);
     });
   } catch (error) {
     console.error('Failed to start server:', error);

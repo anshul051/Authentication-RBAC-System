@@ -5,11 +5,12 @@ import {
   logout,
   refresh,
 } from "../controllers/auth.controller.js";
+import { registerLimiter, authLimiter } from "../middleware/rateLimit.middleware.js";
 
 const router = express.Router();
 
-router.post("/register", register);
-router.post("/login", login);
+router.post("/register", registerLimiter, register);
+router.post("/login", authLimiter, login);
 router.post("/logout", logout);
 router.post("/refresh", refresh);
 
