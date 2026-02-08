@@ -1,10 +1,5 @@
 import express from "express";
-import {
-  register,
-  login,
-  logout,
-  refresh,
-} from "../controllers/auth.controller.js";
+import {register,login, logout,refresh,} from "../controllers/auth.controller.js";
 import { registerLimiter, authLimiter } from "../middleware/rateLimiter.middleware.js";
 
 const router = express.Router();
