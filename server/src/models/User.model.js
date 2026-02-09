@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { type } from 'os';
 import validator from 'validator';
 
 const userSchema = new mongoose.Schema(
@@ -27,11 +28,45 @@ const userSchema = new mongoose.Schema(
     },
     refreshTokens: [
       {
-        token: { type: String, required: true },
-        createdAt: { type: Date, default: Date.now },
-        expiresAt: { type: Date, required: true },
+        token: {
+          type: String,
+          required: true,
+        },
+        tokenId: {
+          type: String,
+          required: true,
+        },
+        device: {
+          type: String,
+          required: true,
+        },
+        browser: {
+          type: String,
+          default: 'Unknown Browser',
+        },
+        os: {
+          type: String,
+          default: 'Unknown OS',
+        },
+        ipAddress: {
+          type: String,
+          required: true,
+        },
+        lastActive: {
+          type: Date,
+          default: Date.now,
+        },
+        createdAt: {
+          type: Date,
+          default: Date.now,
+        },
+        expiresAt: {
+          type: Date,
+          required: true,
+        },
       },
     ],
+    
     isEmailVerified: {
       type: Boolean,
       default: false,
