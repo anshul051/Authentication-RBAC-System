@@ -13,6 +13,7 @@ import {
   resetLoginAttempts,
   checkAccountLock 
 } from '../utils/accountLockout.util.js';
+import { parseUserAgent } from '../utils/deviceDetection.util.js';
 
 /**
  * Register a new user
@@ -374,12 +375,24 @@ export const refresh = async (req, res) => {
     user.refreshTokens = user.refreshTokens.filter(
       (tokenObj) => tokenObj.token !== refreshToken
     );
+
+    //Parse device info from user Agent
+    const { device, browser, os } = parseUserAgent(getUserAgent(req));
+    const ipAddress = getClientIp(req);
     
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7);
     
+    // Save refresh token with session details for better security and auditing
     user.refreshTokens.push({
       token: newRefreshToken,
+      tokenId,
+      device,
+      browser,
+      os,
+      ipAddress,
+      lastActive: new Date(),
+      createdAt: new Date(),
       expiresAt,
     });
     
