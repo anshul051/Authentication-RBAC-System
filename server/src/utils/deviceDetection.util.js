@@ -1,7 +1,9 @@
 /**
  * Parse user agent string to extract device, browser, and OS information.
  */
-export const parseUserAgent = (userAgent) => {
+
+
+export const parseUserAgent = (userAgentString) => {
   if (!userAgentString) {
     return {
       device: "Unknown Device",
