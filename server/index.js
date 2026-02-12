@@ -23,6 +23,8 @@ app.use('/api/auth', authRoutes);  // ← This line is critical!
 app.use('/api/user', userRoutes);
 app.use('/api/audit', auditRoutes);
 
+app.use('/api/sessions', sessionRoutes);  
+
 const startServer = async () => {
   try {
     await connectDB();
