@@ -1,6 +1,11 @@
-import User from '../models/User.model.js';
-import { createAuditLog, getClientIp, getUserAgent } from '../utils/auditLog.util.js';
-import { unlockAccount } from '../utils/accountLockout.util.js';
+import User from "../models/User.model.js";
+import {
+  createAuditLog,
+  getClientIp,
+  getUserAgent,
+} from "../utils/auditLog.util.js";
+import { unlockAccount } from "../utils/accountLockout.util.js";
+import { cleanupExpiredTokens } from "../utils/tokenCleanup.util.js";
 
 /**
  * Get current user profile
@@ -13,12 +18,12 @@ export const getProfile = async (req, res) => {
     const userId = req.user.userId;
 
     // Find user (exclude password)
-    const user = await User.findById(userId).select('-password -refreshTokens');
+    const user = await User.findById(userId).select("-password -refreshTokens");
 
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: 'User not found',
+        message: "User not found",
       });
     }
 
@@ -26,11 +31,11 @@ export const getProfile = async (req, res) => {
     await createAuditLog({
       userId: user._id,
       email: user.email,
-      action: 'PROFILE_VIEWED',
-      details: 'User viewed their profile',
+      action: "PROFILE_VIEWED",
+      details: "User viewed their profile",
       ipAddress: getClientIp(req),
       userAgent: getUserAgent(req),
-      status: 'success',
+      status: "success",
     });
 
     res.status(200).json({
@@ -46,10 +51,10 @@ export const getProfile = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error('Get profile error:', error);
+    console.error("Get profile error:", error);
     res.status(500).json({
       success: false,
-      message: 'Failed to get profile',
+      message: "Failed to get profile",
       error: error.message,
     });
   }
@@ -67,15 +72,15 @@ export const updateProfile = async (req, res) => {
 
     // Check if email is already taken by another user
     if (email) {
-      const existingUser = await User.findOne({ 
-        email, 
-        _id: { $ne: userId } // Not equal to current user
+      const existingUser = await User.findOne({
+        email,
+        _id: { $ne: userId }, // Not equal to current user
       });
 
       if (existingUser) {
         return res.status(400).json({
           success: false,
-          message: 'Email already in use',
+          message: "Email already in use",
         });
       }
     }
@@ -84,21 +89,20 @@ export const updateProfile = async (req, res) => {
     const user = await User.findByIdAndUpdate(
       userId,
       { email },
-      { new: true, runValidators: true }
-    ).select('-password -refreshTokens');
-
+      { new: true, runValidators: true },
+    ).select("-password -refreshTokens");
 
     // LOG PROFILE UPDATE
     await createAuditLog({
       userId: user._id,
       email: user.email,
-      action: 'PROFILE_UPDATED',
-      details: 'User updated their profile',
+      action: "PROFILE_UPDATED",
+      details: "User updated their profile",
       ipAddress: getClientIp(req),
       userAgent: getUserAgent(req),
-      status: 'success',
+      status: "success",
       metadata: {
-        changedFields: email ? ['email'] : [],
+        changedFields: email ? ["email"] : [],
         oldEmail: oldUser.email,
         newEmail: user.email,
       },
@@ -106,14 +110,14 @@ export const updateProfile = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: 'Profile updated successfully',
+      message: "Profile updated successfully",
       data: { user },
     });
   } catch (error) {
-    console.error('Update profile error:', error);
+    console.error("Update profile error:", error);
     res.status(500).json({
       success: false,
-      message: 'Failed to update profile',
+      message: "Failed to update profile",
       error: error.message,
     });
   }
@@ -123,18 +127,18 @@ export const updateProfile = async (req, res) => {
 export const getAllUsers = async (req, res) => {
   try {
     const users = await User.find()
-      .select('-password -refreshTokens')
-      .sort({ createdAt: -1 });  // Newest first
+      .select("-password -refreshTokens")
+      .sort({ createdAt: -1 }); // Newest first
 
-      // ← LOG ADMIN ACTION
+    // ← LOG ADMIN ACTION
     await createAuditLog({
       userId: req.user.userId,
       email: req.user.email,
-      action: 'ADMIN_VIEWED_USERS',
+      action: "ADMIN_VIEWED_USERS",
       details: `Admin viewed all users (${users.length} total)`,
       ipAddress: getClientIp(req),
       userAgent: getUserAgent(req),
-      status: 'success',
+      status: "success",
     });
 
     res.status(200).json({
@@ -145,10 +149,10 @@ export const getAllUsers = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error('Get all users error:', error);
+    console.error("Get all users error:", error);
     res.status(500).json({
       success: false,
-      message: 'Failed to get users',
+      message: "Failed to get users",
       error: error.message,
     });
   }
@@ -164,11 +168,11 @@ export const unlockUserAccount = async (req, res) => {
     const { userId } = req.params;
 
     const user = await User.findById(userId);
-    
+
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: 'User not found',
+        message: "User not found",
       });
     }
 
@@ -177,11 +181,11 @@ export const unlockUserAccount = async (req, res) => {
     await createAuditLog({
       userId: req.user.userId,
       email: req.user.email,
-      action: 'ADMIN_VIEWED_USERS',
+      action: "ADMIN_VIEWED_USERS",
       details: `Admin unlocked account for ${user.email}`,
       ipAddress: getClientIp(req),
       userAgent: getUserAgent(req),
-      status: 'success',
+      status: "success",
       metadata: {
         unlockedUserId: userId,
         unlockedUserEmail: user.email,
@@ -193,11 +197,50 @@ export const unlockUserAccount = async (req, res) => {
       message: `Account unlocked for ${user.email}`,
     });
   } catch (error) {
-    console.error('Unlock account error:', error);
+    console.error("Unlock account error:", error);
     res.status(500).json({
       success: false,
-      message: 'Failed to unlock account',
+      message: "Failed to unlock account",
       error: error.message,
+    });
+  }
+};
+
+/**
+ * Manually trigger token cleanup (admin only)
+ * @route POST /api/user/cleanup-tokens
+ * @access Private (admin)
+ */
+export const triggerTokenCleanup = async (req, res) => {
+  try {
+    const tokensRemoved = await cleanupExpiredTokens();
+
+    await createAuditLog({
+      userId: req.user.userId,
+      email: req.user.email,
+      action: 'ADMIN_CLEANED_TOKENS',
+      details: `Admin triggered token cleanup: ${tokensRemoved} tokens removed`,
+      ipAddress: getClientIp(req),
+      userAgent: getUserAgent(req),
+      status: 'success',
+      metadata: {
+        tokensRemoved,
+      },
+    });
+
+    res.status(200).json({
+      success: true,
+      message: `Cleanup complete: ${tokensRemoved} expired token(s) removed`,
+      data: {
+        tokensRemoved,
+      },
+    });
+  } catch (error) {
+    console.error('Cleanup tokens error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to cleanup tokens',
+      error: error.messaage,
     });
   }
 };
