@@ -1,5 +1,5 @@
 import express from "express";
-import { getProfile, updateProfile, getAllUsers, unlockUserAccount } from "../controllers/user.controller.js";
+import { getProfile, updateProfile, getAllUsers, unlockUserAccount, triggerTokenCleanup } from "../controllers/user.controller.js";
 import { authenticate } from "../middleware/auth.middleware.js";
 import { authorize } from "../middleware/rbac.middleware.js";
 
@@ -17,5 +17,5 @@ router.put("/profile", updateProfile);
 // Admin-only route
 router.get("/all", authorize("admin"), getAllUsers);
 router.post('/unlock/:userId', authorize('admin'), unlockUserAccount);
-
+router.post('/cleanup-tokens', authorize('admin'), triggerTokenCleanup);
 export default router;

@@ -8,6 +8,7 @@ import connectDB from './src/db/connect.js';
 import auditRoutes from './src/routes/audit.route.js';
 import { generalLimiter } from './src/middleware/rateLimiter.middleware.js';
 import sessionRoutes from './src/routes/session.route.js';
+import { cleanupExpiredTokens } from './src/utils/tokenCleanup.util.js';
 
 dotenv.config();
 
@@ -29,6 +30,10 @@ app.use('/api/sessions', sessionRoutes);
 const startServer = async () => {
   try {
     await connectDB();
+
+    // Run token cleanup on startup
+    console.log('Running token cleanup on startup...');
+    await cleanupExpiredTokens();
     
     app.listen(PORT, () => {
       console.log(`🚀 Server running on port ${PORT}`);
