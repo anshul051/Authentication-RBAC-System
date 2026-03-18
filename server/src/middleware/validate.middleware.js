@@ -1,10 +1,11 @@
 import { body, validationResult } from 'express-validator';
 
+
 /**
  * Middleware to check validation results
  * Always use this after the validation rules
  */
-export const validate = (req, res, next) => {
+export const handleValidationErrors = (req, res, next) => {
     const errors = validationResult(req);
 
     if(!errors.isEmpty()) {

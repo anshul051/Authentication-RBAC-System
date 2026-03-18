@@ -9,11 +9,18 @@ import auditRoutes from './src/routes/audit.route.js';
 import { generalLimiter } from './src/middleware/rateLimiter.middleware.js';
 import sessionRoutes from './src/routes/session.route.js';
 import { cleanupExpiredTokens } from './src/utils/tokenCleanup.util.js';
+import cors from 'cors';
 
 dotenv.config();
 
+
 const app = express();
 const PORT = process.env.PORT || 5000;
+
+app.use(cors({
+  origin: "http://localhost:5173",
+  credentials: true
+}));
 
 // Middleware
 app.use(express.json());

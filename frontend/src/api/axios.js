@@ -27,61 +27,59 @@ let isRefreshing = false;
 let failedQueue = [];
 
 const processQueue = (error, token = null) => {
-    failedQueue.forEach(prom => {
-        if (error) {
-            prom.reject(error);
-        } else {
-            prom.resolve(token);
-        }
-    });
-    failedQueue = [];
+  failedQueue.forEach(prom => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(token);
+    }
+  });
+  failedQueue = [];
 };
 
 api.interceptors.response.use(
-    // If respone is successful, just return it
-    (respone) => response,
+  // ✅ If response is successful, just return it
+  (response) => response,
 
-    // If respone has an error, handle it
-    async (error) => {
-        const originalRequest = error.config;
+  // ✅ If response has error, handle it
+  async (error) => {
+    const originalRequest = error.config;
 
-        // If 401 (unauthorized) and not already retrying
-        if (error.respone?.status === 401 && !originalRequest._retry) {
-            if(isRefreshing) {
-                // If already refreshing, queue the request
-                return new Promise((resolve, reject) => {
-                    failedQueue.push({ resolve, reject });
-                }).then(() => {
-                    return api(originalRequest);
-                }).catch(err => {
-                    return Promise.reject(err);
-                });
-            }
+    // If 401 (unauthorized) and not already retrying
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      
+      if (isRefreshing) {
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        })
+          .then(() => api(originalRequest))
+          .catch(err => Promise.reject(err));
+      }
 
-            originalRequest._retry = true;
-            isRefreshing = true;
+      originalRequest._retry = true;
+      isRefreshing = true;
 
-            try {
-                // Try to refresh the access token
-                await api.post('/auth/refresh');
-
-                processQueue(null);
-                isRefreshing = false;
-
-                // Retry original request
-                return api(originalRequest);
-            } catch (refreshError) {
-                processQueue(refreshError, null);
-                isRefreshing = false;
-
-                // Refresh failed, redirect to login
-                window.location.href = '/login';
-                return Promise.reject(refreshError);
-            }
-        }
-
-        return Promise.reject(error);
+      try {
+        // Try to refresh the access token
+        await api.post('/auth/refresh');
+        
+        processQueue(null);
+        isRefreshing = false;
+        
+        // Retry original request
+        return api(originalRequest);
+      } catch (refreshError) {
+        processQueue(refreshError, null);
+        isRefreshing = false;
+        
+        // Refresh failed - redirect to login
+        window.location.href = '/login';
+        return Promise.reject(refreshError);
+      }
     }
+
+    return Promise.reject(error);
+  }
 );
 
 export default api;

@@ -1,10 +1,10 @@
-import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import useAuth from '../hooks/useAuth.js';
+import { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import useAuth from "../hooks/useAuth.js";
 
 const Login = () => {
-  const [formData, setFormData] = useState({ email: '', password: '' });
-  const [error, setError] = useState('');
+  const [formData, setFormData] = useState({ email: "", password: "" });
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   const { login } = useAuth();
@@ -12,23 +12,23 @@ const Login = () => {
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
-    setError('');
+    setError("");
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
+    setError("");
 
     try {
-      await login(formData.email, formData.password);
-      navigate('/');
+      const result = await login(formData.email, formData.password);
+      navigate("/");
     } catch (err) {
-      const errorMessage = err.response?.data?.message || 'Login failed';
+      const errorMessage = err.response?.data?.message || "Login failed";
       const errors = err.response?.data?.errors;
-      
+
       if (errors && errors.length > 0) {
-        setError(errors.map(e => e.message).join(', '));
+        setError(errors.map((e) => e.message).join(", "));
       } else {
         setError(errorMessage);
       }
@@ -85,13 +85,16 @@ const Login = () => {
             disabled={loading}
             className="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 disabled:opacity-70 disabled:cursor-not-allowed transition"
           >
-            {loading ? 'Signing in...' : 'Sign In'}
+            {loading ? "Signing in..." : "Sign In"}
           </button>
         </form>
 
         <p className="text-center mt-6 text-gray-600 text-sm">
-          Don't have an account?{' '}
-          <Link to="/register" className="text-indigo-600 font-medium hover:text-indigo-700">
+          Don't have an account?{" "}
+          <Link
+            to="/register"
+            className="text-indigo-600 font-medium hover:text-indigo-700"
+          >
             Register here
           </Link>
         </p>
