@@ -186,7 +186,7 @@ PORT=5000
 # Database
 MONGO_URI=mongodb://localhost:27017/rbac-auth-system
 # Or MongoDB Atlas:
-# MONGO_URI=mongodb+srv://username:password@cluster.mongodb.net/rbac-auth-system
+# MONGO_URI=mongodb+srv://<username>:<password>@cluster.mongodb.net/rbac-auth-system
 
 # JWT Secrets (Generate with: node -e "console.log(require('crypto').randomBytes(64).toString('hex'))")
 ACCESS_TOKEN_SECRET=your_access_token_secret_here
