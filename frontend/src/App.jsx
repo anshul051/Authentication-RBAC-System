@@ -11,6 +11,16 @@ import Sessions from './pages/Sessions.jsx';
 import Unauthorized from './pages/Unauthorized.jsx';
 
 function App() {
+  const { loading } = useAuth();
+
+  if(loading) {
+    return (
+      <div className='min-h-screen flex items-center justify-center'>
+        <div className='text-lg'>Loading....</div>
+      </div>
+    );
+  }
+
   return (
     <AuthProvider>
       <Routes>

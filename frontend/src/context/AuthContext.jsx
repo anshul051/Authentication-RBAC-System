@@ -21,6 +21,7 @@ export const AuthProvider = ({ children }) => {
       setUser(response.data.data.user);
     } catch (error) {
       // Not logged in, that's fine
+      console.log('Not authenticated:', error.message);
       setUser(null);
     } finally {
       setLoading(false); // Done checking
